@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bhagavad Gita</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-top: 50px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #form {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        label {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        input {
+            font-size: 16px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 5px 10px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #333;
+        }
+
+        #sanskrit {
+            font-size: 24px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #translation {
+            font-size: 18px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #speech {
+            font-size: 16px;
+            padding: 5px 10px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        #speech:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bhagavad Gita Sloka</h1>
+    <form id="form">
+        <label for="chapter">Chapter:</label>
+        <input type="number" id="chapter" name="chapter" min="1" max="18" required>
+        <label for="verse">Verse:</label>
+        <input type="number" id="verse" name="verse" min="1" max="47" required>
+        <button type="submit">Get Sloka</button>
+    </form>
+    <div>
+        <h2>Sanskrit</h2>
+        <div id="sanskrit"></div>
+    </div>
+    <div>
+        <h2>Translation</h2>
+        <div id="translation"></div>
+    </div>
+
+    <button id="speech">Hear Sloka and Translation</button>
+
+    <script>
+        const form = document.getElementById('form');
+        const speechButton = document.getElementById('speech');
+
+        let slokaText = '';
+        let translationText = '';
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+
+            const chapter = document.getElementById('chapter').value;
+            const verse = document.getElementById('verse').value;
+
+            const apiEndpoint = `https://bhagavadgitaapi.in/slok/${chapter}/${verse}/`;
+
+            fetch(apiEndpoint)
+                .then(response => response.json())
+                .then(data => {
+            slokaText = data.slok;
+            translationText = data.tej.author + ': ' + data.tej.ht;
+            document.getElementById('sanskrit').innerHTML = slokaText;
+            document.getElementById('translation').innerHTML = translationText;
+
+            // enable the hear button
+            hearButton.disabled = false;
+        })
+        .catch(error => {
+            console.error(error);
+            // disable the hear button if there is an error
+            hearButton.disabled = true;
+        });
+});
+
+hearButton.addEventListener('click', () => {
+    if ('speechSynthesis' in window && slokaText && translationText) {
+        const voices = window.speechSynthesis.getVoices();
+        const hindiVoice = voices.find(voice => voice.lang === 'hi-IN');
+        const sanskritVoice = voices.find(voice => voice.lang === 'sa-IN');
+        const englishVoice = voices.find(voice => voice.lang === 'en-US');
+
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = `${slokaText}. ${translationText}`;
+        speech.rate = 0.8;
+
+        if (hindiVoice) {
+            // use Hindi voice if available
+            speech.voice = hindiVoice;
+            speech.lang = 'hi-IN';
+        } else if (sanskritVoice) {
+            // use Sanskrit voice if available
+            speech.voice = sanskritVoice;
+            speech.lang = 'sa-IN';
+        } else if (englishVoice) {
+            // use English voice as fallback
+            speech.voice = englishVoice;
+            speech.lang = 'en-US';
+        }
+
+        window.speechSynthesis.speak(speech);
+    }
+});
+</script>
+</body>
+</html>
